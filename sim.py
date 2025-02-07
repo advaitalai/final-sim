@@ -38,7 +38,7 @@ def main() -> None:
     cwd = os.getcwd()
 
     # Load the model and data.
-    model_path = cwd + "/final-sim/kuka_iiwa_14/scene.xml"
+    model_path = cwd + "/kuka_iiwa_14/scene.xml"
     model = mujoco.MjModel.from_xml_path(model_path)
     data = mujoco.MjData(model)
 
