@@ -2,7 +2,7 @@ import mujoco
 import mujoco.viewer
 import numpy as np
 import time
-import os
+from pathlib import Path
 
 # Cartesian impedance control gains.
 impedance_pos = np.asarray([100.0, 100.0, 100.0])  # [N/m]
@@ -35,10 +35,11 @@ dt: float = 0.002
 
 def main() -> None:
     assert mujoco.__version__ >= "3.1.0", "Please upgrade to mujoco 3.1.0 or later."
-    cwd = os.getcwd()
+
+    cwd = Path(__file__).resolve().parent  # Parent directory path
 
     # Load the model and data.
-    model_path = cwd + "/kuka_iiwa_14/scene.xml"
+    model_path = str(cwd) + "/kuka_iiwa_14/scene.xml"
     model = mujoco.MjModel.from_xml_path(model_path)
     data = mujoco.MjData(model)
 
