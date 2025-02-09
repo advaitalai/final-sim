@@ -177,11 +177,14 @@ def mocap_ik(model, data, flag=0) -> None:
     q0 = model.key(key_name).qpos
 
     # Desired pose to emulate. 
+    z_delta = 0 # this is the z delta for the eef depending on the IK flag type. 
     if flag == 0: 
         named_body = data.body("target")
+        z_delta = 0
     else:
         named_body = data.body("object")
-
+        z_delta = 0.1
+        
     # Pre-allocate numpy arrays.
     jac = np.zeros((6, model.nv))
     twist = np.zeros(6)
@@ -210,6 +213,7 @@ def mocap_ik(model, data, flag=0) -> None:
 
             # Spatial velocity (aka twist).
             dx = named_body.xpos - data.site(site_id).xpos
+            dx[2] += z_delta
             twist[:3] = Kpos * dx / integration_dt
             mujoco.mju_mat2Quat(site_quat, data.site(site_id).xmat)
             mujoco.mju_negQuat(site_quat_conj, site_quat)
