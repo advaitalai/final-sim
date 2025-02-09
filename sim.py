@@ -32,18 +32,118 @@ gravity_compensation: bool = True
 # Simulation timestep in seconds.
 dt: float = 0.002
 
+# Maximum allowable joint velocity in rad/s. Set to 0 to disable.
+max_angvel = 0.0
 
-def main() -> None:
-    assert mujoco.__version__ >= "3.1.0", "Please upgrade to mujoco 3.1.0 or later."
+# Damping term for the pseudoinverse. This is used to prevent joint velocities from
+# becoming too large when the Jacobian is close to singular.
+damping: float = 1e-4
 
-    cwd = Path(__file__).resolve().parent  # Parent directory path
+def auto_ik(model, data) -> None: 
+    """ Automatically moves to the object location and then to the target location"""
+    
+    # End-effector site we wish to control, in this case a site attached to the last
+    # link (wrist_3_link) of the robot.
+    site_id = model.site("attachment_site").id
 
-    # Load the model and data.
-    model_path = str(cwd) + "/kuka_iiwa_14/scene.xml"
-    model = mujoco.MjModel.from_xml_path(model_path)
-    data = mujoco.MjData(model)
+    # Name of bodies we wish to apply gravity compensation to.
+    body_names = [
+        "link1",
+        "link2",
+        "link3",
+        "link4",
+        "link5",
+        "link6",
+        "link7",
+    ]
+    body_ids = [model.body(name).id for name in body_names]
+    if gravity_compensation:
+        model.body_gravcomp[body_ids] = 1.0
 
-    model.opt.timestep = dt
+    # Get the dof and actuator ids for the joints we wish to control.
+    joint_names = [
+        "joint1",
+        "joint2",
+        "joint3",
+        "joint4",
+        "joint5",
+        "joint6",
+        "joint7",
+    ]
+    dof_ids = np.array([model.joint(name).id for name in joint_names])
+    # Note that actuator names are the same as joint names in this case.
+    actuator_ids = np.array([model.actuator(name).id for name in joint_names])
+
+    # Initial joint configuration saved as a keyframe in the XML file.
+    key_id = model.key("home").id
+
+    # Mocap body we will control with our mouse.
+    # mocap_id = model.body("target").mocapid[0]
+
+    # Pre-allocate numpy arrays.
+    jac = np.zeros((6, model.nv))
+    diag = damping * np.eye(6)
+    error = np.zeros(6)
+    error_pos = error[:3]
+    error_ori = error[3:]
+    site_quat = np.zeros(4)
+    site_quat_conj = np.zeros(4)
+    error_quat = np.zeros(4)
+
+    with mujoco.viewer.launch_passive(
+        model=model, data=data, show_left_ui=False, show_right_ui=False
+    ) as viewer:
+        # Reset the simulation to the initial keyframe.
+        mujoco.mj_resetDataKeyframe(model, data, key_id)
+
+        # Initialize the camera view to that of the free camera.
+        mujoco.mjv_defaultFreeCamera(model, viewer.cam)
+
+        # Toggle site frame visualization.
+        viewer.opt.frame = mujoco.mjtFrame.mjFRAME_SITE
+
+        while viewer.is_running():
+            step_start = time.time()
+
+            # Position error.
+            error_pos[:] = data.body("object").xpos - data.site(site_id).xpos
+
+            # Orientation error.
+            mujoco.mju_mat2Quat(site_quat, data.site(site_id).xmat)
+            mujoco.mju_negQuat(site_quat_conj, site_quat)
+            mujoco.mju_mulQuat(error_quat, data.body("object").xquat, site_quat_conj)
+            mujoco.mju_quat2Vel(error_ori, error_quat, 1.0)
+
+            # Get the Jacobian with respect to the end-effector site.
+            mujoco.mj_jacSite(model, data, jac[:3], jac[3:], site_id)
+
+            # Solve system of equations: J @ dq = error.
+            dq = jac.T @ np.linalg.solve(jac @ jac.T + diag, error)
+
+            # Scale down joint velocities if they exceed maximum.
+            if max_angvel > 0:
+                dq_abs_max = np.abs(dq).max()
+                if dq_abs_max > max_angvel:
+                    dq *= max_angvel / dq_abs_max
+
+            # Integrate joint velocities to obtain joint positions.
+            q = data.qpos.copy()
+            mujoco.mj_integratePos(model, q, dq, integration_dt)
+
+            # Set the control signal.
+            np.clip(q, *model.jnt_range.T, out=q)
+            data.ctrl[actuator_ids] = q[dof_ids]
+
+            # Step the simulation.
+            mujoco.mj_step(model, data)
+
+            viewer.sync()
+            time_until_next_step = dt - (time.time() - step_start)
+            if time_until_next_step > 0:
+                time.sleep(time_until_next_step)
+
+def mocap_ik(model, data, flag=0) -> None:
+    """" Follows the mouse cursor as if through teleoperation """
 
     # Compute damping and stiffness matrices.
     damping_pos = damping_ratio * 2 * np.sqrt(impedance_pos)
@@ -76,9 +176,11 @@ def main() -> None:
     key_id = model.key(key_name).id
     q0 = model.key(key_name).qpos
 
-    # Mocap body we will control with our mouse.
-    mocap_name = "target"
-    mocap_id = model.body(mocap_name).mocapid[0]
+    # Desired pose to emulate. 
+    if flag == 0: 
+        named_body = data.body("target")
+    else:
+        named_body = data.body("object")
 
     # Pre-allocate numpy arrays.
     jac = np.zeros((6, model.nv))
@@ -107,12 +209,12 @@ def main() -> None:
             step_start = time.time()
 
             # Spatial velocity (aka twist).
-            dx = data.mocap_pos[mocap_id] - data.site(site_id).xpos
+            dx = named_body.xpos - data.site(site_id).xpos
             twist[:3] = Kpos * dx / integration_dt
             mujoco.mju_mat2Quat(site_quat, data.site(site_id).xmat)
             mujoco.mju_negQuat(site_quat_conj, site_quat)
-            mujoco.mju_mulQuat(error_quat, data.mocap_quat[mocap_id], site_quat_conj)
-            mujoco.mju_quat2Vel(twist[3:], error_quat, 1.0)
+            mujoco.mju_mulQuat(error_quat, named_body.xquat, site_quat_conj)
+            mujoco.mju_quat2Vel(twist[3:], error_quat, integration_dt)
             twist[3:] *= Kori / integration_dt
 
             # Jacobian.
@@ -150,4 +252,15 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    assert mujoco.__version__ >= "3.1.0", "Please upgrade to mujoco 3.1.0 or later."
+
+    cwd = Path(__file__).resolve().parent  # Parent directory path
+
+    # Load the model and data.
+    model_path = str(cwd) + "/kuka_iiwa_14/scene.xml"
+    model = mujoco.MjModel.from_xml_path(model_path)
+    data = mujoco.MjData(model)
+    model.opt.timestep = dt
+
+    mocap_ik(model, data, 1)
+    #auto_ik(model, data)
