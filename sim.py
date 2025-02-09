@@ -9,7 +9,7 @@ impedance_pos = np.asarray([100.0, 100.0, 100.0])  # [N/m]
 impedance_ori = np.asarray([50.0, 50.0, 50.0])  # [Nm/rad]
 
 # Joint impedance control gains.
-Kp_null = np.asarray([75.0, 75.0, 50.0, 50.0, 40.0, 25.0, 25.0])
+Kp_null = np.asarray([75.0, 75.0, 50.0, 50.0, 40.0, 25.0, 25.0, 30.0, 30.0, 20.0, 20.0, 15.0, 15.0])
 
 # Damping ratio for both Cartesian and joint impedance control.
 damping_ratio = 1.0
@@ -39,109 +39,6 @@ max_angvel = 0.0
 # becoming too large when the Jacobian is close to singular.
 damping: float = 1e-4
 
-def auto_ik(model, data) -> None: 
-    """ Automatically moves to the object location and then to the target location"""
-    
-    # End-effector site we wish to control, in this case a site attached to the last
-    # link (wrist_3_link) of the robot.
-    site_id = model.site("attachment_site").id
-
-    # Name of bodies we wish to apply gravity compensation to.
-    body_names = [
-        "link1",
-        "link2",
-        "link3",
-        "link4",
-        "link5",
-        "link6",
-        "link7",
-    ]
-    body_ids = [model.body(name).id for name in body_names]
-    if gravity_compensation:
-        model.body_gravcomp[body_ids] = 1.0
-
-    # Get the dof and actuator ids for the joints we wish to control.
-    joint_names = [
-        "joint1",
-        "joint2",
-        "joint3",
-        "joint4",
-        "joint5",
-        "joint6",
-        "joint7",
-    ]
-    dof_ids = np.array([model.joint(name).id for name in joint_names])
-    # Note that actuator names are the same as joint names in this case.
-    actuator_ids = np.array([model.actuator(name).id for name in joint_names])
-
-    # Initial joint configuration saved as a keyframe in the XML file.
-    key_id = model.key("home").id
-
-    # Mocap body we will control with our mouse.
-    # mocap_id = model.body("target").mocapid[0]
-
-    # Pre-allocate numpy arrays.
-    jac = np.zeros((6, model.nv))
-    diag = damping * np.eye(6)
-    error = np.zeros(6)
-    error_pos = error[:3]
-    error_ori = error[3:]
-    site_quat = np.zeros(4)
-    site_quat_conj = np.zeros(4)
-    error_quat = np.zeros(4)
-
-    with mujoco.viewer.launch_passive(
-        model=model, data=data, show_left_ui=False, show_right_ui=False
-    ) as viewer:
-        # Reset the simulation to the initial keyframe.
-        mujoco.mj_resetDataKeyframe(model, data, key_id)
-
-        # Initialize the camera view to that of the free camera.
-        mujoco.mjv_defaultFreeCamera(model, viewer.cam)
-
-        # Toggle site frame visualization.
-        viewer.opt.frame = mujoco.mjtFrame.mjFRAME_SITE
-
-        while viewer.is_running():
-            step_start = time.time()
-
-            # Position error.
-            error_pos[:] = data.body("object").xpos - data.site(site_id).xpos
-
-            # Orientation error.
-            mujoco.mju_mat2Quat(site_quat, data.site(site_id).xmat)
-            mujoco.mju_negQuat(site_quat_conj, site_quat)
-            mujoco.mju_mulQuat(error_quat, data.body("object").xquat, site_quat_conj)
-            mujoco.mju_quat2Vel(error_ori, error_quat, 1.0)
-
-            # Get the Jacobian with respect to the end-effector site.
-            mujoco.mj_jacSite(model, data, jac[:3], jac[3:], site_id)
-
-            # Solve system of equations: J @ dq = error.
-            dq = jac.T @ np.linalg.solve(jac @ jac.T + diag, error)
-
-            # Scale down joint velocities if they exceed maximum.
-            if max_angvel > 0:
-                dq_abs_max = np.abs(dq).max()
-                if dq_abs_max > max_angvel:
-                    dq *= max_angvel / dq_abs_max
-
-            # Integrate joint velocities to obtain joint positions.
-            q = data.qpos.copy()
-            mujoco.mj_integratePos(model, q, dq, integration_dt)
-
-            # Set the control signal.
-            np.clip(q, *model.jnt_range.T, out=q)
-            data.ctrl[actuator_ids] = q[dof_ids]
-
-            # Step the simulation.
-            mujoco.mj_step(model, data)
-
-            viewer.sync()
-            time_until_next_step = dt - (time.time() - step_start)
-            if time_until_next_step > 0:
-                time.sleep(time_until_next_step)
-
 def mocap_ik(model, data, flag=0) -> None:
     """" Follows the mouse cursor as if through teleoperation """
 
@@ -168,8 +65,10 @@ def mocap_ik(model, data, flag=0) -> None:
         "joint6",
         "joint7",
     ]
-    dof_ids = np.array([model.joint(name).id for name in joint_names])
-    actuator_ids = np.array([model.actuator(name).id for name in joint_names])
+    #dof_ids = np.array([model.joint(name).id for name in joint_names])
+    dof_ids = np.array([i for i in range(model.nv)])
+    actuator_ids = dof_ids
+    #actuator_ids = np.array([model.actuator(name).id for name in joint_names])
 
     # Initial joint configuration saved as a keyframe in the XML file.
     key_name = "home"
@@ -183,7 +82,7 @@ def mocap_ik(model, data, flag=0) -> None:
         z_delta = 0
     else:
         named_body = data.body("object")
-        z_delta = 0.1
+        z_delta = 0.3 #move the gripper above the block in case of object seek.
         
     # Pre-allocate numpy arrays.
     jac = np.zeros((6, model.nv))
@@ -244,9 +143,16 @@ def mocap_ik(model, data, flag=0) -> None:
             if gravity_compensation:
                 tau += data.qfrc_bias[dof_ids]
 
-            # Set the control signal and step the simulation.
-            np.clip(tau, *model.actuator_ctrlrange.T, out=tau)
-            data.ctrl[actuator_ids] = tau[actuator_ids]
+            # Set the control signals
+            arm_tau = tau[:7] # Only arm torques
+            finger_tau = 10
+            tau_combined = np.zeros(model.nu)
+            tau_combined[:7] = arm_tau  # arm motors
+            tau_combined[7]  = finger_tau  # single gripper actuator
+            np.clip(tau_combined, *model.actuator_ctrlrange.T, out=tau_combined)
+            data.ctrl[:] = tau_combined
+
+            # Step the simulation
             mujoco.mj_step(model, data)
 
             viewer.sync()
