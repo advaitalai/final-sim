@@ -31,7 +31,7 @@ gravity_compensation: bool = True
 
 # Simulation timestep in seconds.
 dt: float = 0.002
-task_time: int = 3 # Move to the next task every 5 seconds
+task_time: int = 2 # Move to the next task every 5 seconds
 
 # Maximum allowable joint velocity in rad/s. Set to 0 to disable.
 max_angvel = 0.0
@@ -40,8 +40,14 @@ max_angvel = 0.0
 # becoming too large when the Jacobian is close to singular.
 damping: float = 1e-4
 
-task_space = ['pre-grasp', 'move-down']
-
+def grip_control (data, task) -> int:
+    # Zero by default is closed, one is open
+    if task == 'grasp':
+        val = 150
+    else:
+        val = 0
+    return val
+    
 def get_task_pose(model, data, task: str) -> np.ndarray:
     task_pose = np.zeros(7) # first 3 are positions, last 4 are quaternions
     if task == 'pre-grasp':
@@ -53,7 +59,9 @@ def get_task_pose(model, data, task: str) -> np.ndarray:
         task_pose[2] += 0.15 # the gripper should be just above the box to grasp it. 
         task_pose[3:] = data.body("object").xquat # set to the orientation of the target
     elif task == 'grasp':
-        pass
+        task_pose[:3] = data.body("object").xpos
+        task_pose[2] += 0.15 # the gripper should be just above the box to grasp it. 
+        task_pose[3:] = data.body("object").xquat # set to the orientation of the target
     elif task == 'move-up':
         pass
     elif task == 'mocap':
@@ -67,7 +75,7 @@ def execute_tasks(model, data, flag=1) -> None:
     if flag == 0:
         task_space = ['mocap']
     else:
-        task_space = ['pre-grasp', 'move-down']
+        task_space = ['pre-grasp', 'move-down', 'grasp']
     
     # Compute damping and stiffness matrices.
     damping_pos = damping_ratio * 2 * np.sqrt(impedance_pos)
@@ -161,10 +169,9 @@ def execute_tasks(model, data, flag=1) -> None:
 
             # Set the control signals
             arm_tau = tau[:7] # Only arm torques
-            finger_tau = 10
             tau_combined = np.zeros(model.nu)
             tau_combined[:7] = arm_tau  # arm motors
-            tau_combined[7]  = finger_tau  # single gripper actuator
+            tau_combined[7]  = grip_control(data, task)
             np.clip(tau_combined, *model.actuator_ctrlrange.T, out=tau_combined)
             data.ctrl[:] = tau_combined
 
