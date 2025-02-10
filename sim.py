@@ -9,19 +9,20 @@ impedance_pos = np.asarray([100.0, 100.0, 100.0])  # [N/m]
 impedance_ori = np.asarray([50.0, 50.0, 50.0])  # [Nm/rad]
 
 # Joint impedance control gains.
-Kp_null = np.asarray([75.0, 75.0, 50.0, 50.0, 40.0, 25.0, 25.0, 30.0, 30.0, 20.0, 20.0, 15.0, 15.0])
+#Kp_null = np.asarray([10.0, 10.0, 10.0, 10.0, 25.0, 25.0, 25.0, 0.0, 30.0, 20.0, 20.0, 15.0, 15.0, 10, 10, 10, 10, 10, 10])
+Kp_null = np.asarray([75.0, 75.0, 50.0, 50.0, 40.0, 25.0, 25.0, 30.0, 30.0, 20.0, 20.0, 15.0, 15.0, 10, 10, 10, 10, 10, 10])
 
 # Damping ratio for both Cartesian and joint impedance control.
 damping_ratio = 1.0
 
 # Gains for the twist computation. These should be between 0 and 1. 0 means no
 # movement, 1 means move the end-effector to the target in one integration step.
-Kpos: float = 0.95
+Kpos: float = 0.5 # 0.95
 
 # Gain for the orientation component of the twist computation. This should be
 # between 0 and 1. 0 means no movement, 1 means move the end-effector to the target
 # orientation in one integration step.
-Kori: float = 0.95
+Kori: float = 0.5 # 0.95
 
 # Integration timestep in seconds.
 integration_dt: float = 1.0
@@ -160,7 +161,10 @@ def execute_tasks(model, data, flag=1) -> None:
 
             # Add joint task in nullspace.
             Jbar = M_inv @ jac.T @ Mx
-            ddq = Kp_null * (q0 - data.qpos[dof_ids]) - Kd_null * data.qvel[dof_ids]
+            #ddq = Kp_null * (q0 - data.qpos[dof_ids]) - Kd_null * data.qvel[dof_ids]
+            dqpos = np.zeros(model.nv)
+            mujoco.mj_differentiatePos(model, dqpos, integration_dt, q0, data.qpos)
+            ddq = Kp_null * dqpos - Kd_null * data.qvel
             tau += (np.eye(model.nv) - jac.T @ Jbar.T) @ ddq
 
             # Add gravity compensation.
