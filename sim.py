@@ -177,6 +177,7 @@ def execute_tasks(model, data, flag=1) -> None:
                 task = task_space.pop(0) # the first run, this is 'pre-grasp'
                 task_space.append(task)
                 print(f"Switching to task at target pose: {task, task_pose}")
+                print(f"Current end-effector pose: {data.site(site_id).xpos, site_quat}")
 
             viewer.sync()
             time_until_next_step = dt - (time.time() - step_start)
@@ -195,4 +196,4 @@ if __name__ == "__main__":
     data = mujoco.MjData(model)
     model.opt.timestep = dt
 
-    execute_tasks(model, data, 0)
+    execute_tasks(model, data, 1)
