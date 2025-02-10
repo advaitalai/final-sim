@@ -40,8 +40,7 @@ max_angvel = 0.0
 # becoming too large when the Jacobian is close to singular.
 damping: float = 1e-4
 
-#task_space = ['pre-grasp', 'move-down', 'grasp', 'move-up', 'mocap']
-task_space = ['pre-grasp']
+task_space = ['pre-grasp', 'move-down']
 
 def get_task_pose(model, data, task: str) -> np.ndarray:
     task_pose = np.zeros(7) # first 3 are positions, last 4 are quaternions
@@ -50,7 +49,9 @@ def get_task_pose(model, data, task: str) -> np.ndarray:
         task_pose[2] += 0.3 # the gripper should be 30cm above the target while pre-grasp in the z direction
         task_pose[3:] = data.body("object").xquat # set to the orientation of the target
     elif task == 'move-down':
-        pass
+        task_pose[:3] = data.body("object").xpos
+        task_pose[2] += 0.15 # the gripper should be just above the box to grasp it. 
+        task_pose[3:] = data.body("object").xquat # set to the orientation of the target
     elif task == 'grasp':
         pass
     elif task == 'move-up':
@@ -60,9 +61,14 @@ def get_task_pose(model, data, task: str) -> np.ndarray:
         task_pose[3:] = data.body("target").xquat # set to the orientation of the target
     return task_pose
 
-def execute_tasks(model, data) -> None:
-    """" Core loop to cycle through task space and perform IK """
+def execute_tasks(model, data, flag=1) -> None:
+    """" (flag = 1) Core loop to cycle through task space and perform IK. (flag = 0) is for mocap mouse seek """
 
+    if flag == 0:
+        task_space = ['mocap']
+    else:
+        task_space = ['pre-grasp', 'move-down']
+    
     # Compute damping and stiffness matrices.
     damping_pos = damping_ratio * 2 * np.sqrt(impedance_pos)
     damping_ori = damping_ratio * 2 * np.sqrt(impedance_ori)
@@ -74,6 +80,7 @@ def execute_tasks(model, data) -> None:
     site_name = "attachment_site"
     site_id = model.site(site_name).id
 
+    # Get the DOF and actuator ids
     dof_ids = np.array([i for i in range(model.nv)])
     actuator_ids = dof_ids
 
@@ -82,15 +89,6 @@ def execute_tasks(model, data) -> None:
     key_id = model.key(key_name).id
     q0 = model.key(key_name).qpos
 
-    # Desired pose to emulate. 
-    # z_delta = 0 # this is the z delta for the eef depending on the IK flag type. 
-    # if flag == 0: 
-    #     named_body = data.body("target")
-    #     z_delta = 0
-    # else:
-    #     named_body = data.body("object")
-    #     z_delta = 0.3 #move the gripper above the block in case of object seek.
-        
     # Pre-allocate numpy arrays.
     jac = np.zeros((6, model.nv))
     twist = np.zeros(6)
@@ -101,7 +99,8 @@ def execute_tasks(model, data) -> None:
     Mx = np.zeros((6, 6))
 
     # Start with a certain task in the task space. 
-    task = task_space[0] # start with a pre-grasp task
+    task = task_space.pop(0) # the first run, this is 'pre-grasp'
+    task_space.append(task)
     task_pose = get_task_pose(model, data, task)
 
     # Simulation counter. Move to the next task every (task_time / dt) ticks
@@ -196,4 +195,4 @@ if __name__ == "__main__":
     data = mujoco.MjData(model)
     model.opt.timestep = dt
 
-    execute_tasks(model, data)
+    execute_tasks(model, data, 0)
