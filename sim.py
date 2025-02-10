@@ -31,6 +31,7 @@ gravity_compensation: bool = True
 
 # Simulation timestep in seconds.
 dt: float = 0.002
+task_time: int = 3 # Move to the next task every 5 seconds
 
 # Maximum allowable joint velocity in rad/s. Set to 0 to disable.
 max_angvel = 0.0
@@ -39,8 +40,28 @@ max_angvel = 0.0
 # becoming too large when the Jacobian is close to singular.
 damping: float = 1e-4
 
-def mocap_ik(model, data, flag=0) -> None:
-    """" Follows the mouse cursor as if through teleoperation """
+#task_space = ['pre-grasp', 'move-down', 'grasp', 'move-up', 'mocap']
+task_space = ['pre-grasp']
+
+def get_task_pose(model, data, task: str) -> np.ndarray:
+    task_pose = np.zeros(7) # first 3 are positions, last 4 are quaternions
+    if task == 'pre-grasp':
+        task_pose[:3] = data.body("object").xpos
+        task_pose[2] += 0.3 # the gripper should be 30cm above the target while pre-grasp in the z direction
+        task_pose[3:] = data.body("object").xquat # set to the orientation of the target
+    elif task == 'move-down':
+        pass
+    elif task == 'grasp':
+        pass
+    elif task == 'move-up':
+        pass
+    elif task == 'mocap':
+        task_pose[:3] = data.body("target").xpos
+        task_pose[3:] = data.body("target").xquat # set to the orientation of the target
+    return task_pose
+
+def execute_tasks(model, data) -> None:
+    """" Core loop to cycle through task space and perform IK """
 
     # Compute damping and stiffness matrices.
     damping_pos = damping_ratio * 2 * np.sqrt(impedance_pos)
@@ -53,22 +74,8 @@ def mocap_ik(model, data, flag=0) -> None:
     site_name = "attachment_site"
     site_id = model.site(site_name).id
 
-    # Get the dof and actuator ids for the joints we wish to control. These are copied
-    # from the XML file. Feel free to comment out some joints to see the effect on
-    # the controller.
-    joint_names = [
-        "joint1",
-        "joint2",
-        "joint3",
-        "joint4",
-        "joint5",
-        "joint6",
-        "joint7",
-    ]
-    #dof_ids = np.array([model.joint(name).id for name in joint_names])
     dof_ids = np.array([i for i in range(model.nv)])
     actuator_ids = dof_ids
-    #actuator_ids = np.array([model.actuator(name).id for name in joint_names])
 
     # Initial joint configuration saved as a keyframe in the XML file.
     key_name = "home"
@@ -76,13 +83,13 @@ def mocap_ik(model, data, flag=0) -> None:
     q0 = model.key(key_name).qpos
 
     # Desired pose to emulate. 
-    z_delta = 0 # this is the z delta for the eef depending on the IK flag type. 
-    if flag == 0: 
-        named_body = data.body("target")
-        z_delta = 0
-    else:
-        named_body = data.body("object")
-        z_delta = 0.3 #move the gripper above the block in case of object seek.
+    # z_delta = 0 # this is the z delta for the eef depending on the IK flag type. 
+    # if flag == 0: 
+    #     named_body = data.body("target")
+    #     z_delta = 0
+    # else:
+    #     named_body = data.body("object")
+    #     z_delta = 0.3 #move the gripper above the block in case of object seek.
         
     # Pre-allocate numpy arrays.
     jac = np.zeros((6, model.nv))
@@ -92,6 +99,13 @@ def mocap_ik(model, data, flag=0) -> None:
     error_quat = np.zeros(4)
     M_inv = np.zeros((model.nv, model.nv))
     Mx = np.zeros((6, 6))
+
+    # Start with a certain task in the task space. 
+    task = task_space[0] # start with a pre-grasp task
+    task_pose = get_task_pose(model, data, task)
+
+    # Simulation counter. Move to the next task every (task_time / dt) ticks
+    i = 0
 
     with mujoco.viewer.launch_passive(
         model=model,
@@ -111,12 +125,15 @@ def mocap_ik(model, data, flag=0) -> None:
             step_start = time.time()
 
             # Spatial velocity (aka twist).
-            dx = named_body.xpos - data.site(site_id).xpos
-            dx[2] += z_delta
+            task_pose = get_task_pose(model, data, task)
+            #dx = named_body.xpos - data.site(site_id).xpos
+            dx = task_pose[:3] - data.site(site_id).xpos
+            #dx[2] += z_delta
             twist[:3] = Kpos * dx / integration_dt
             mujoco.mju_mat2Quat(site_quat, data.site(site_id).xmat)
             mujoco.mju_negQuat(site_quat_conj, site_quat)
-            mujoco.mju_mulQuat(error_quat, named_body.xquat, site_quat_conj)
+            #mujoco.mju_mulQuat(error_quat, named_body.xquat, site_quat_conj)
+            mujoco.mju_mulQuat(error_quat, task_pose[3:], site_quat_conj)
             mujoco.mju_quat2Vel(twist[3:], error_quat, integration_dt)
             twist[3:] *= Kori / integration_dt
 
@@ -154,6 +171,13 @@ def mocap_ik(model, data, flag=0) -> None:
 
             # Step the simulation
             mujoco.mj_step(model, data)
+            i += 1
+
+            # Update the task every 2500 ticks
+            if i % int(task_time / dt) == 0:
+                task = task_space.pop(0) # the first run, this is 'pre-grasp'
+                task_space.append(task)
+                print(f"Switching to task at target pose: {task, task_pose}")
 
             viewer.sync()
             time_until_next_step = dt - (time.time() - step_start)
@@ -172,5 +196,4 @@ if __name__ == "__main__":
     data = mujoco.MjData(model)
     model.opt.timestep = dt
 
-    mocap_ik(model, data, 1)
-    #auto_ik(model, data)
+    execute_tasks(model, data)

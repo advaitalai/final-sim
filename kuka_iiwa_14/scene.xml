@@ -22,8 +22,8 @@
       <site type="sphere" size="0.01" rgba="0 0 1 1" group="1"/>
     </body>
 
-    <body name="object" pos="0.5 0.5 0.05" quat="0 0 1 0">
-      <geom name="red_box" type="box" size=".05 .05 .05" rgba="1 0 0 0.25"/>
+    <body name="object" pos="0.5 0.5 0.025" quat="0 0 1 0">
+      <geom name="red_box" type="box" size=".025 .025 .025" rgba="1 0 0 0.25"/>
     </body>
   </worldbody>
 </mujoco>
