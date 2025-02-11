@@ -1,4 +1,5 @@
 <mujoco model="robot_arm">
+    <compiler autolimits="true"/>
 	<default>
 		<!-- Default definitions for visual and collision geoms -->
 		<default class="visual">
@@ -9,15 +10,15 @@
 		</default>
 		<!-- Default definition for all hinge joints -->
 		<default class="joint_hinge">
-			<joint type="hinge" axis="0 1 0" range="-180 180" damping="1" stiffness="1"/>
+			<joint type="hinge" axis="0 1 0" range="-360 360" damping="1" stiffness="1"/>
 		</default>
 		<!-- Default definition for slide joints with positive range -->
 		<default class="joint_slide_pos">
-			<joint type="slide" axis="0 1 0" range="0 0.02" damping="100" stiffness="1000"/>
+			<joint type="slide" axis="0 1 0" range="0 0.02" damping="1" stiffness="1"/>
 		</default>
 		<!-- Default definition for slide joints with negative range -->
 		<default class="joint_slide_neg">
-			<joint type="slide" axis="0 1 0" range="-0.02 0" damping="100" stiffness="1000"/>
+			<joint type="slide" axis="0 1 0" range="-0.02 0" damping="1" stiffness="1"/>
 		</default>
 	</default>
 
@@ -145,7 +146,7 @@
 			<geom mesh="base_link_5" class="collision"/>
 			<geom mesh="base_link_6" class="collision"/>
 			
-			<body name="l1" pos="0 0.1915 0" euler="0 0 0">
+			<body name="l1" pos="0 0.1915 0" euler="0 0 0" gravcomp="1">
 				<joint name="base_l1_joint" class="joint_hinge"/>
 				<inertial pos="0.00000463 0.04597 0" mass="5.1" diaginertia="0.003049855 0.0018651954 0.001865195"/>
 				<!-- l1 geoms -->
@@ -164,7 +165,7 @@
 				<geom mesh="l1_5" class="collision"/>
 				<geom mesh="l1_6" class="collision"/>
 				
-				<body name="l2" pos="0 0 -0.1405" euler="-90 -90 0">
+				<body name="l2" pos="0 0 -0.1405" euler="-90 -90 0" gravcomp="1">
 					<joint name="l1_l2_joint" class="joint_hinge"/>
 					<inertial pos="0.1104 0 0.01661" mass="1.36" diaginertia="0.00165864 0.013069 0.014101"/>
 					<!-- l2 geoms -->
@@ -175,7 +176,7 @@
 					<geom mesh="l2_1" class="collision"/>
 					<geom mesh="l2_2" class="collision"/>
 					
-					<body name="l3" pos="0.230 -0.1415 0" euler="0 0 0">
+					<body name="l3" pos="0.230 -0.1415 0" euler="0 0 0" gravcomp="1">
 						<joint name="l2_l3_joint" class="joint_hinge"/>
 						<inertial pos="0.00007798 -0.03574 0" mass="3.319" diaginertia="0.017921 0.011307 0.010111"/>
 						<!-- l3 geoms -->
@@ -188,7 +189,7 @@
 						<geom mesh="l3_2" class="collision"/>
 						<geom mesh="l3_3" class="collision"/>
 						
-						<body name="l4" pos="0.230 0 0" euler="90 0 -90">
+						<body name="l4" pos="0.230 0 0" euler="90 0 -90" gravcomp="1">
 							<joint name="l3_l4_joint" class="joint_hinge"/>
 							<inertial pos="-0.0000176 -0.005787 -0.04962" mass="0.508" diaginertia="0.0010416 0.001147 0.000490056"/>
 							<!-- l4 geoms -->
@@ -197,7 +198,7 @@
 							<geom mesh="l4_0" class="collision"/>
 							<geom mesh="l4_1" class="collision"/>
 							
-							<body name="l5" pos="0 0 -0.1625" euler="-90 0 0">
+							<body name="l5" pos="0 0 -0.1625" euler="-90 0 0" gravcomp="1">
 								<joint name="l4_l5_joint" class="joint_hinge"/>
 								<inertial pos="0.000000127 -0.04124 0" mass="2.49617" diaginertia="0.001 0.001 0.001"/>
 								<!-- l5 geoms -->
@@ -208,7 +209,7 @@
 								<geom mesh="l5_1" class="collision"/>
 								<geom mesh="l5_2" class="collision"/>
 										
-								<body name="l6" pos="0 0 0.165" euler="90 90 0">
+								<body name="l6" pos="0 0 0.165" euler="90 90 0" gravcomp="1">
 									<joint name="l5_l6_joint" class="joint_hinge"/>
 									<inertial pos="0.000214 -0.00486 0.2902" mass="0.5" diaginertia="0.000352796 0.000341516 0.000518422"/>
 									<!-- l6 geoms -->
@@ -243,19 +244,19 @@
 									<geom mesh="l6_13" class="collision"/>
 									<geom mesh="l6_14" class="collision"/>
 
-									<body name="cover" pos="0 0 0" euler="0 0 0" >
+									<body name="cover" pos="0 0 0" euler="0 0 0"  gravcomp="1">
 										<site name="attachment_site" rgba="1 0 0 1" size="0.01" group="1"/>
 										<joint name="l6_cover" class="joint_hinge"/>
 										<geom mesh="cover" class="visual"/>
 										<geom mesh="cover" class="collision"/>
 
-										<body name="finger1" pos="0 0.03 0.0425" euler="-90 0 90">
+										<body name="finger1" pos="0 0.03 0.0425" euler="-90 0 90" gravcomp="1">
 											<joint name="cover_finger1" class="joint_slide_pos"/>
 											<geom mesh="finger1" class="visual"/>
 											<geom mesh="finger1" class="collision"/>
 										</body>
 
-										<body name="finger2" pos="0 0.03 0.0425" euler="-90 0 90">
+										<body name="finger2" pos="0 0.03 0.0425" euler="-90 0 90" gravcomp="1">
 											<joint name="cover_finger2" class="joint_slide_neg"/>
 											<geom mesh="finger2" class="visual"/>
 											<geom mesh="finger2" class="collision"/>
@@ -270,6 +271,15 @@
 		</body>
 	</worldbody>
 
+    <contact>
+        <exclude body1="base_link" body2="l1"/>
+        <exclude body1="base_link" body2="l2"/>
+        <exclude body1="base_link" body2="l3"/>
+        <exclude body1="l1" body2="l3"/>
+        <exclude body1="l3" body2="l5"/>
+        <exclude body1="l4" body2="l6"/>
+    </contact>
+    
 	<actuator>
 		<motor joint="base_l1_joint" ctrlrange="-31.4 31.4"/>
 		<motor joint="l1_l2_joint" ctrlrange="-31.4 31.4"/>

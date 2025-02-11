@@ -31,14 +31,14 @@ gravity_compensation: bool = True
 
 # Simulation timestep in seconds.
 dt: float = 0.002
-task_time: int = 2 # Move to the next task every 5 seconds
+task_time: int = 5 # Move to the next task every 5 seconds
 
 # Maximum allowable joint velocity in rad/s. Set to 0 to disable.
 max_angvel = 0.0
 
 # Damping term for the pseudoinverse. This is used to prevent joint velocities from
 # becoming too large when the Jacobian is close to singular.
-damping: float = 1e-4
+damping: float = 1e-5
 
 def grip_control (data, task) -> int:
     # Zero by default is closed, one is open
@@ -56,7 +56,7 @@ def get_task_pose(model, data, task: str) -> np.ndarray:
         task_pose[3:] = data.body("object").xquat # set to the orientation of the target
     elif task == 'move-down':
         task_pose[:3] = data.body("object").xpos
-        task_pose[2] += 0.15 # the gripper should be just above the box to grasp it. 
+        task_pose[2] += 0.15 # the gripper should be just above the object to grasp it. 
         task_pose[3:] = data.body("object").xquat # set to the orientation of the target
     elif task == 'grasp':
         task_pose[:3] = data.body("object").xpos
@@ -75,13 +75,14 @@ def execute_tasks(model, data, flag=1) -> None:
     if flag == 0:
         task_space = ['mocap']
     else:
-        task_space = ['pre-grasp', 'move-down', 'grasp']
+        task_space = ['pre-grasp', 'move-down']
     
     # Compute damping and stiffness matrices.
     damping_pos = damping_ratio * 2 * np.sqrt(impedance_pos)
     damping_ori = damping_ratio * 2 * np.sqrt(impedance_ori)
     Kp = np.concatenate([impedance_pos, impedance_ori], axis=0)
     Kd = np.concatenate([damping_pos, damping_ori], axis=0)
+    Ki = Kp * 0.2 # Unused. 
     Kd_null = damping_ratio * 2 * np.sqrt(Kp_null)
 
     # End-effector site we wish to control.
@@ -99,17 +100,16 @@ def execute_tasks(model, data, flag=1) -> None:
 
     # Pre-allocate numpy arrays.
     jac = np.zeros((6, model.nv))
+    diag = damping * np.eye(6)
     twist = np.zeros(6)
+    error = np.zeros(6)
+    error_pos = error[:3]
+    error_ori = error[3:]
     site_quat = np.zeros(4)
     site_quat_conj = np.zeros(4)
     error_quat = np.zeros(4)
     M_inv = np.zeros((model.nv, model.nv))
     Mx = np.zeros((6, 6))
-
-    # Start with a certain task in the task space. 
-    task = task_space.pop(0) # the first run, this is 'pre-grasp'
-    task_space.append(task)
-    task_pose = get_task_pose(model, data, task)
 
     # Simulation counter. Move to the next task every (task_time / dt) ticks
     i = 0
@@ -131,21 +131,37 @@ def execute_tasks(model, data, flag=1) -> None:
         while viewer.is_running():
             step_start = time.time()
 
-            # Spatial velocity (aka twist).
+            # Start with a certain task in the task space. 
+            task = task_space[0]
             task_pose = get_task_pose(model, data, task)
+
             #dx = named_body.xpos - data.site(site_id).xpos
-            dx = task_pose[:3] - data.site(site_id).xpos
-            #dx[2] += z_delta
-            twist[:3] = Kpos * dx / integration_dt
+            error_pos[:] = task_pose[:3] - data.site(site_id).xpos
             mujoco.mju_mat2Quat(site_quat, data.site(site_id).xmat)
             mujoco.mju_negQuat(site_quat_conj, site_quat)
-            #mujoco.mju_mulQuat(error_quat, named_body.xquat, site_quat_conj)
             mujoco.mju_mulQuat(error_quat, task_pose[3:], site_quat_conj)
-            mujoco.mju_quat2Vel(twist[3:], error_quat, integration_dt)
-            twist[3:] *= Kori / integration_dt
+            mujoco.mju_quat2Vel(error_ori, error_quat, integration_dt)
+
+            print(f"Task: {task}, Error: {error}")
 
             # Jacobian.
             mujoco.mj_jacSite(model, data, jac[:3], jac[3:], site_id)
+
+            # Solve system of equations: J @ dq = error.
+            dq = jac.T @ np.linalg.solve(jac @ jac.T + diag, error)
+
+            # Integrate joint velocities to obtain joint positions.
+            q = data.qpos.copy()
+            mujoco.mj_integratePos(model, q, dq, integration_dt)
+
+            # Set the control signal.
+            np.clip(q, *model.jnt_range.T, out=q)
+            data.ctrl[actuator_ids] = q[dof_ids]
+
+            """ All of these computations are done for nullspace going through the force route
+            # Calculate velocities
+            twist[:3] = Kpos * error_pos / integration_dt
+            twist[3:] = Kori * error_ori / integration_dt
 
             # Compute the task-space inertia matrix.
             mujoco.mj_solveM(model, data, M_inv, np.eye(model.nv))
@@ -155,13 +171,13 @@ def execute_tasks(model, data, flag=1) -> None:
             else:
                 Mx = np.linalg.pinv(Mx_inv, rcond=1e-2)
 
-            # Compute generalized forces.
+            # Compute generalized forces. Add integral term if necessary
             tau = jac.T @ Mx @ (Kp * twist - Kd * (jac @ data.qvel[dof_ids]))
 
-            # Add joint task in nullspace.
-            Jbar = M_inv @ jac.T @ Mx
-            ddq = Kp_null * (q0 - data.qpos[dof_ids]) - Kd_null * data.qvel[dof_ids]
-            tau += (np.eye(model.nv) - jac.T @ Jbar.T) @ ddq
+            # Add joint task in nullspace. - commented out for a 6 DOF a3c arm, there is NO null space. 
+            # Jbar = M_inv @ jac.T @ Mx
+            # ddq = Kp_null * (q0 - data.qpos[dof_ids]) - Kd_null * data.qvel[dof_ids]
+            # tau += (np.eye(model.nv) - jac.T @ Jbar.T) @ ddq
 
             # Add gravity compensation.
             if gravity_compensation:
@@ -174,15 +190,17 @@ def execute_tasks(model, data, flag=1) -> None:
             tau_combined[7]  = grip_control(data, task)
             np.clip(tau_combined, *model.actuator_ctrlrange.T, out=tau_combined)
             data.ctrl[:] = tau_combined
+            """
 
             # Step the simulation
             mujoco.mj_step(model, data)
             i += 1
 
-            # Update the task every 2500 ticks
+            # Update the task every X ticks
             if i % int(task_time / dt) == 0:
                 task = task_space.pop(0) # the first run, this is 'pre-grasp'
                 task_space.append(task)
+                error_integral = np.zeros(6)
                 print(f"Switching to task at target pose: {task, task_pose}")
                 print(f"Current end-effector pose: {data.site(site_id).xpos, site_quat}")
 
