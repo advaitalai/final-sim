@@ -1,0 +1,280 @@
+<!-- DEPRECATED. USE A3C_GPT.XML INSTEAD -->
+<mujoco model="robot_arm">
+  <default>
+    <default class="visual">
+      <geom type="mesh" mass="0" group="2" contype="0" conaffinity="0"/>
+    </default>
+    <default class="collision">
+      <geom group="3" type="mesh" condim="6" friction="1 5e-3 5e-4" solref=".01 1"/>
+    </default>
+  </default>
+
+  <asset>
+    <!-- All materials -->
+    <material name="DEFAULT_MTL.001" specular="0.0" shininess="0.25" rgba="0.800000 0.800000 0.800000 1.000000"/>
+    <material name="MTL0.005" specular="0.0" shininess="0.25" rgba="1.000000 1.000000 0.000000 1.000000"/>
+    <material name="MTL1.003" specular="0.0" shininess="0.25" rgba="1.000000 1.000000 1.000000 1.000000"/>
+    <material name="MTL2.002" specular="0.0" shininess="0.25" rgba="1.000000 0.000000 0.000000 1.000000"/>
+    <material name="MTL3.001" specular="0.0" shininess="0.25" rgba="0.000000 0.502000 0.502000 1.000000"/>
+    <material name="MTL4.001" specular="0.0" shininess="0.25" rgba="0.110000 0.110000 0.110000 1.000000"/>
+    <material name="MTL5.001" specular="0.0" shininess="0.25" rgba="0.843000 0.816000 0.753000 1.000000"/>
+    
+    <material name="MTL0.006" specular="0.0" shininess="0.25" rgba="1.000000 1.000000 1.000000 1.000000"/>
+    <material name="MTL0.007" specular="0.0" shininess="0.25" rgba="0.000000 0.502000 0.502000 1.000000"/>
+    <material name="MTL0.008" specular="0.0" shininess="0.25" rgba="0.000000 0.502000 0.502000 1.000000"/>
+    <material name="MTL0.009" specular="0.0" shininess="0.25" rgba="0.000000 0.502000 0.502000 1.000000"/>
+    <material name="MTL1.002" specular="0.0" shininess="0.25" rgba="1.000000 1.000000 1.000000 1.000000"/>
+    <material name="MTL2.001" specular="0.0" shininess="0.25" rgba="1.000000 0.000000 0.000000 1.000000"/>
+    <material name="Material.002" specular="0.0" shininess="0.25" rgba="0.800000 0.800000 0.800000 1.000000"/>
+    
+    <material name="DEFAULT_MTL" specular="0.0" shininess="0.25" rgba="0.800000 0.800000 0.800000 1.000000"/>
+    <material name="MTL0.010" specular="0.0" shininess="0.25" rgba="1.000000 1.000000 1.000000 1.000000"/>
+    <material name="MTL1.004" specular="0.0" shininess="0.25" rgba="0.000000 0.502000 0.502000 1.000000"/>
+    
+    <material name="MTL0" specular="0.0" shininess="0.25" rgba="1.000000 1.000000 1.000000 1.000000"/>
+    <material name="MTL0.011" specular="0.0" shininess="0.25" rgba="0.000000 0.502000 0.502000 1.000000"/>
+    <material name="MTL0.012" specular="0.0" shininess="0.25" rgba="0.000000 0.502000 0.502000 1.000000"/>
+    <material name="MTL1" specular="0.0" shininess="0.25" rgba="0.000000 0.502000 0.502000 1.000000"/>
+    
+    <material name="MTL0.013" specular="0.0" shininess="0.25" rgba="1.000000 1.000000 1.000000 1.000000"/>
+    <material name="MTL1.005" specular="0.0" shininess="0.25" rgba="0.000000 0.502000 0.502000 1.000000"/>
+    
+    <material name="MTL0.014" specular="0.0" shininess="0.25" rgba="0.000000 0.502000 0.502000 1.000000"/>
+    <material name="MTL0.015" specular="0.0" shininess="0.25" rgba="1.000000 1.000000 1.000000 1.000000"/>
+    <material name="MTL1.006" specular="0.0" shininess="0.25" rgba="0.000000 0.502000 0.502000 1.000000"/>
+    
+    <material name="DEFAULT_MTL.002" specular="0.0" shininess="0.25" rgba="0.800000 0.800000 0.800000 1.000000"/>
+    <material name="MTL0.016" specular="0.0" shininess="0.25" rgba="1.000000 1.000000 1.000000 1.000000"/>
+    <material name="MTL1.007" specular="0.0" shininess="0.25" rgba="0.098000 0.098000 0.098000 1.000000"/>
+    <material name="MTL10" specular="0.0" shininess="0.25" rgba="0.843000 0.816000 0.753000 1.000000"/>
+    <material name="MTL11" specular="0.0" shininess="0.25" rgba="0.251000 0.251000 0.251000 1.000000"/>
+    <material name="MTL12" specular="0.0" shininess="0.25" rgba="0.827000 0.329000 0.071000 1.000000"/>
+    <material name="MTL13" specular="0.0" shininess="0.25" rgba="0.017000 0.018000 0.019000 1.000000"/>
+    <material name="MTL2.003" specular="0.0" shininess="0.25" rgba="0.784000 0.686000 0.510000 1.000000"/>
+    <material name="MTL3" specular="0.0" shininess="0.25" rgba="0.691000 0.664000 0.598000 1.000000"/>
+    <material name="MTL4" specular="0.0" shininess="0.25" rgba="0.060000 0.400000 0.060000 1.000000"/>
+    <material name="MTL5" specular="0.0" shininess="0.25" rgba="0.157000 0.157000 0.157000 1.000000"/>
+    <material name="MTL6" specular="0.0" shininess="0.25" rgba="0.725000 0.725000 0.725000 1.000000"/>
+    <material name="MTL7" specular="0.0" shininess="0.25" rgba="0.459000 0.345000 0.176000 1.000000"/>
+    <material name="MTL8" specular="0.0" shininess="0.25" rgba="0.502000 0.502000 0.502000 1.000000"/>
+    <material name="MTL9" specular="0.0" shininess="0.25" rgba="1.000000 1.000000 0.000000 1.000000"/>
+
+    
+    <!-- Meshes for all links -->
+    <mesh file="meshes/visual/base_link/base_link_0.obj"/>
+    <mesh file="meshes/visual/base_link/base_link_1.obj"/>
+    <mesh file="meshes/visual/base_link/base_link_2.obj"/>
+    <mesh file="meshes/visual/base_link/base_link_3.obj"/>
+    <mesh file="meshes/visual/base_link/base_link_4.obj"/>
+    <mesh file="meshes/visual/base_link/base_link_5.obj"/>
+    <mesh file="meshes/visual/base_link/base_link_6.obj"/>
+    
+    <mesh file="meshes/visual/l1/l1_0.obj"/>
+    <mesh file="meshes/visual/l1/l1_1.obj"/>
+    <mesh file="meshes/visual/l1/l1_2.obj"/>
+    <mesh file="meshes/visual/l1/l1_3.obj"/>
+    <mesh file="meshes/visual/l1/l1_4.obj"/>
+    <mesh file="meshes/visual/l1/l1_5.obj"/>
+    <mesh file="meshes/visual/l1/l1_6.obj"/>
+
+    <mesh file="meshes/visual/l2/l2_0.obj"/>
+    <mesh file="meshes/visual/l2/l2_1.obj"/>
+    <mesh file="meshes/visual/l2/l2_2.obj"/>
+
+    <mesh file="meshes/visual/l3/l3_0.obj"/>
+    <mesh file="meshes/visual/l3/l3_1.obj"/>
+    <mesh file="meshes/visual/l3/l3_2.obj"/>
+    <mesh file="meshes/visual/l3/l3_3.obj"/>
+
+    <mesh file="meshes/visual/l4/l4_0.obj"/>
+    <mesh file="meshes/visual/l4/l4_1.obj"/>
+
+    <mesh file="meshes/visual/l5/l5_0.obj"/>
+    <mesh file="meshes/visual/l5/l5_1.obj"/>
+    <mesh file="meshes/visual/l5/l5_2.obj"/>
+
+    <mesh file="meshes/visual/l6/l6_0.obj"/>
+    <mesh file="meshes/visual/l6/l6_1.obj"/>
+    <mesh file="meshes/visual/l6/l6_2.obj"/>
+    <mesh file="meshes/visual/l6/l6_3.obj"/>
+    <mesh file="meshes/visual/l6/l6_4.obj"/>
+    <mesh file="meshes/visual/l6/l6_5.obj"/>
+    <mesh file="meshes/visual/l6/l6_6.obj"/>
+    <mesh file="meshes/visual/l6/l6_7.obj"/>
+    <mesh file="meshes/visual/l6/l6_8.obj"/>
+    <mesh file="meshes/visual/l6/l6_9.obj"/>
+    <mesh file="meshes/visual/l6/l6_10.obj"/>
+    <mesh file="meshes/visual/l6/l6_11.obj"/>
+    <mesh file="meshes/visual/l6/l6_12.obj"/>
+    <mesh file="meshes/visual/l6/l6_13.obj"/>
+    <mesh file="meshes/visual/l6/l6_14.obj"/>
+
+    <mesh file="meshes/visual/cover/cover.obj"/>
+    
+    <mesh file="meshes/visual/finger1/finger1.obj"/>
+
+    <mesh file="meshes/visual/finger2/finger2.obj"/>
+
+
+  </asset>
+
+  <worldbody>
+    <body name="base_link" euler="90 0 0">
+      <!-- base_link geoms -->
+      <inertial pos="0 0 0" mass="0.1" diaginertia="0.03 0.03 0.03"/>
+      <geom mesh="base_link_0" material="DEFAULT_MTL.001" class="visual"/>
+      <geom mesh="base_link_1" material="MTL5.001" class="visual"/>
+      <geom mesh="base_link_2" material="MTL4.001" class="visual"/>
+      <geom mesh="base_link_3" material="MTL3.001" class="visual"/>
+      <geom mesh="base_link_4" material="MTL2.002" class="visual"/>
+      <geom mesh="base_link_5" material="MTL1.003" class="visual"/>
+      <geom mesh="base_link_6" material="MTL0.005" class="visual"/>
+      <geom mesh="base_link_0" class="collision"/>
+      <geom mesh="base_link_1" class="collision"/>
+      <geom mesh="base_link_2" class="collision"/>
+      <geom mesh="base_link_3" class="collision"/>
+      <geom mesh="base_link_4" class="collision"/>
+      <geom mesh="base_link_5" class="collision"/>
+      <geom mesh="base_link_6" class="collision"/>
+      
+      <body name="l1" pos="0 0.1915 0" euler="0 0 0" gravcomp="1">
+        <joint name="base_l1_joint" type="hinge" axis="0 1 0" range="-180 180" damping="100" stiffness="1000"/>
+        <inertial pos="0.00000463 0.04597 0" mass="5.1" diaginertia="0.003049855 0.0018651954 0.001865195" />
+        <!-- l1 geoms -->
+        <geom mesh="l1_0" material="MTL0.009" class="visual"/>
+        <geom mesh="l1_1" material="MTL0.008" class="visual"/>
+        <geom mesh="l1_2" material="MTL0.007" class="visual"/>
+        <geom mesh="l1_3" material="MTL2.001" class="visual"/>
+        <geom mesh="l1_4" material="MTL1.002" class="visual"/>
+        <geom mesh="l1_5" material="Material.002" class="visual"/>
+        <geom mesh="l1_6" material="MTL0.006" class="visual"/>
+        <geom mesh="l1_0" class="collision"/>
+        <geom mesh="l1_1" class="collision"/>
+        <geom mesh="l1_2" class="collision"/>
+        <geom mesh="l1_3" class="collision"/>
+        <geom mesh="l1_4" class="collision"/>
+        <geom mesh="l1_5" class="collision"/>
+        <geom mesh="l1_6" class="collision"/>
+        
+        <body name="l2" pos="0 0 -0.1405" euler="-90 -90 0" gravcomp="1">
+          <joint name="l1_l2_joint" type="hinge" axis="0 1 0" range="-180 180" damping="100" stiffness="1000"/>
+          <inertial pos="0.1104 0 0.01661" mass="1.36" diaginertia="0.00165864 0.013069 0.014101"/>
+          <!-- l2 geoms -->
+          <geom mesh="l2_0" material="DEFAULT_MTL" class="visual"/>
+          <geom mesh="l2_1" material="MTL1.004" class="visual"/>
+          <geom mesh="l2_2" material="MTL0.010" class="visual"/>
+          <geom mesh="l2_0" class="collision"/>
+          <geom mesh="l2_1" class="collision"/>
+          <geom mesh="l2_2" class="collision"/>
+          
+          <body name="l3" pos="0.230 -0.1415 0" euler="0 0 0" gravcomp="1">
+            <joint name="l2_l3_joint" type="hinge" axis="0 1 0" range="-180 180" damping="100" stiffness="1000"/>
+            <inertial pos="0.00007798 -0.03574 0" mass="3.319" diaginertia="0.017921 0.011307 0.010111"/>
+            <!-- l3 geoms -->
+            <geom mesh="l3_0" material="MTL1" class="visual"/>
+      	    <geom mesh="l3_1" material="MTL0" class="visual"/>
+   	        <geom mesh="l3_2" material="MTL0.012" class="visual"/>
+    	      <geom mesh="l3_3" material="MTL0.011" class="visual"/>
+            <geom mesh="l3_0" class="collision"/>
+            <geom mesh="l3_1" class="collision"/>
+      	    <geom mesh="l3_2" class="collision"/>
+	          <geom mesh="l3_3" class="collision"/>
+            
+            <body name="l4" pos="0.230 0 0" euler="90 0 -90" gravcomp="1">
+              <joint name="l3_l4_joint" type="hinge" axis="0 1 0" range="-180 180" damping="100" stiffness="1000"/>
+              <inertial pos="-0.0000176 -0.005787 -0.04962" mass="0.508" diaginertia="0.0010416 0.001147 0.000490056"/>
+              <!-- l4 geoms -->
+              <geom mesh="l4_0" material="MTL1.005" class="visual"/>
+	            <geom mesh="l4_1" material="MTL0.013" class="visual"/>
+	            <geom mesh="l4_0" class="collision"/>
+	            <geom mesh="l4_1" class="collision"/>
+              
+              <body name="l5" pos="0 0 -0.1625" euler="-90 0 0" gravcomp="1">
+                <joint name="l4_l5_joint" type="hinge" axis="0 1 0" range="-180 180" damping="100" stiffness="1000"/>
+                <inertial pos="0.000000127 -0.04124 0" mass="2.49617" diaginertia="0.001 0.001 0.001"/>
+                <!-- l5 geoms -->
+                <geom mesh="l5_0" material="MTL1.006" class="visual"/>
+		            <geom mesh="l5_1" material="MTL0.015" class="visual"/>
+      		      <geom mesh="l5_2" material="MTL0.014" class="visual"/>
+                <geom mesh="l5_0" class="collision"/>
+                <geom mesh="l5_1" class="collision"/>
+                <geom mesh="l5_2" class="collision"/>                
+                      
+                <body name="l6" pos="0 0 0.165" euler="90 90 0" gravcomp="1">
+                  <joint name="l5_l6_joint" type="hinge" axis="0 1 0" range="-180 180" damping="100" stiffness="1000"/>
+                  <inertial pos="0.000214 -0.00486 0.2902" mass="0.5" diaginertia="0.000352796 0.000341516 0.000518422"/>
+                  <!-- l6 geoms -->
+                  <geom mesh="l6_0" material="MTL13" class="visual"/>
+                  <geom mesh="l6_1" material="MTL12" class="visual"/>
+                  <geom mesh="l6_2" material="MTL11" class="visual"/>
+                  <geom mesh="l6_3" material="MTL10" class="visual"/>
+                  <geom mesh="l6_4" material="MTL9" class="visual"/>
+                  <geom mesh="l6_5" material="MTL8" class="visual"/>
+                  <geom mesh="l6_6" material="MTL7" class="visual"/>
+                  <geom mesh="l6_7" material="MTL6" class="visual"/>
+                  <geom mesh="l6_8" material="MTL5" class="visual"/>
+                  <geom mesh="l6_9" material="MTL4" class="visual"/>
+                  <geom mesh="l6_10" material="MTL3" class="visual"/>
+                  <geom mesh="l6_11" material="MTL2.003" class="visual"/>
+                  <geom mesh="l6_12" material="MTL1.007" class="visual"/>
+                  <geom mesh="l6_13" material="DEFAULT_MTL.002" class="visual"/>
+                  <geom mesh="l6_14" material="MTL0.016" class="visual"/>
+                  <geom mesh="l6_0" class="collision"/>
+                  <geom mesh="l6_1" class="collision"/>
+                  <geom mesh="l6_2" class="collision"/>
+                  <geom mesh="l6_3" class="collision"/>
+                  <geom mesh="l6_4" class="collision"/>
+                  <geom mesh="l6_5" class="collision"/>
+                  <geom mesh="l6_6" class="collision"/>
+                  <geom mesh="l6_7" class="collision"/>
+                  <geom mesh="l6_8" class="collision"/>
+                  <geom mesh="l6_9" class="collision"/>
+                  <geom mesh="l6_10" class="collision"/>
+                  <geom mesh="l6_11" class="collision"/>
+                  <geom mesh="l6_12" class="collision"/>
+                  <geom mesh="l6_13" class="collision"/>
+                  <geom mesh="l6_14" class="collision"/>
+
+                  <body name="cover" pos="0 0 0" euler="0 0 0" gravcomp="1" >
+                    <site name="attachment_site" rgba="1 0 0 1" size="0.01" group="1"/>
+                    <joint name="l6_cover" type="hinge" axis="0 1 0" range="-180 180" damping="100" stiffness="1000"/>
+                    <geom mesh="cover" class="visual" />
+                    <geom mesh="cover" class="collision" />
+
+                    <body name="finger1" pos="0 0.03 0.0425" euler="-90 0 90" gravcomp="1">
+                      <joint name="cover_finger1" type="slide" axis="0 1 0" range="0 0.02" damping="100" stiffness="1000"/>
+                      <geom mesh="finger1" class="visual"/>
+                      <geom mesh="finger1" class="collision"/>              
+                    </body>
+
+                    <body name="finger2" pos="0 0.03 0.0425" euler="-90 0 90" gravcomp="1">
+                      <joint name="cover_finger2" type="slide" axis="0 1 0" range="-0.02 0" damping="100" stiffness="1000"/>
+                      <geom mesh="finger2" class="visual"/>
+                      <geom mesh="finger2" class="collision"/>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>  
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor joint="base_l1_joint" gear="100" ctrlrange="-31.4 31.4"/>
+    <motor joint="l1_l2_joint" gear="100" ctrlrange="-31.4 31.4"/>
+    <motor joint="l2_l3_joint" gear="100" ctrlrange="-31.4 31.4"/>
+    <motor joint="l3_l4_joint" gear="100" ctrlrange="-31.4 31.4"/>
+    <motor joint="l4_l5_joint" gear="100" ctrlrange="-31.4 31.4"/>
+    <motor joint="l5_l6_joint" gear="100" ctrlrange="-31.4 31.4"/>
+    <motor joint="l6_cover" gear="100" ctrlrange="-31.4 31.4"/>
+    <motor joint="cover_finger1" gear="100" ctrlrange="0 0.35"/>
+    <motor joint="cover_finger2" gear="100" ctrlrange="-0.35 0"/>
+  </actuator>
+
+  <keyframe>
+    <key name="home" qpos="0 0 0 0 0 0 0 0 0"/>
+  </keyframe>
+</mujoco>

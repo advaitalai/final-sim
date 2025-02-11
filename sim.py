@@ -9,7 +9,7 @@ impedance_pos = np.asarray([100.0, 100.0, 100.0])  # [N/m]
 impedance_ori = np.asarray([50.0, 50.0, 50.0])  # [Nm/rad]
 
 # Joint impedance control gains.
-Kp_null = np.asarray([75.0, 75.0, 50.0, 50.0, 40.0, 25.0, 25.0, 30.0, 30.0, 20.0, 20.0, 15.0, 15.0])
+Kp_null = np.asarray([75.0, 75.0, 50.0, 50.0, 40.0, 25.0, 25.0, 30.0, 30.0])
 
 # Damping ratio for both Cartesian and joint impedance control.
 damping_ratio = 1.0
@@ -198,7 +198,7 @@ if __name__ == "__main__":
     cwd = Path(__file__).resolve().parent  # Parent directory path
 
     # Load the model and data.
-    model_path = str(cwd) + "/kuka_iiwa_14/scene.xml"
+    model_path = str(cwd) + "/a3c_mujoco/scene.xml"
     model = mujoco.MjModel.from_xml_path(model_path)
     data = mujoco.MjData(model)
     model.opt.timestep = dt

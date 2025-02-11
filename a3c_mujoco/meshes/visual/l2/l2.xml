@@ -1,0 +1,28 @@
+<mujoco model="l2">
+  <default>
+    <default class="visual">
+      <geom group="2" type="mesh" contype="0" conaffinity="0"/>
+    </default>
+    <default class="collision">
+      <geom group="3" type="mesh"/>
+    </default>
+  </default>
+  <asset>
+    <material name="DEFAULT_MTL" specular="0.0" shininess="0.25" rgba="0.800000 0.800000 0.800000 1.000000"/>
+    <material name="MTL0.010" specular="0.0" shininess="0.25" rgba="1.000000 1.000000 1.000000 1.000000"/>
+    <material name="MTL1.004" specular="0.0" shininess="0.25" rgba="0.000000 0.502000 0.502000 1.000000"/>
+    <mesh file="l2_0.obj"/>
+    <mesh file="l2_1.obj"/>
+    <mesh file="l2_2.obj"/>
+  </asset>
+  <worldbody>
+    <body name="l2">
+      <geom mesh="l2_0" material="DEFAULT_MTL" class="visual"/>
+      <geom mesh="l2_1" material="MTL1.004" class="visual"/>
+      <geom mesh="l2_2" material="MTL0.010" class="visual"/>
+      <geom mesh="l2_0" class="collision"/>
+      <geom mesh="l2_1" class="collision"/>
+      <geom mesh="l2_2" class="collision"/>
+    </body>
+  </worldbody>
+</mujoco>

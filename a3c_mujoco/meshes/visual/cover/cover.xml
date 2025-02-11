@@ -1,0 +1,19 @@
+<mujoco model="cover">
+  <default>
+    <default class="visual">
+      <geom group="2" type="mesh" contype="0" conaffinity="0"/>
+    </default>
+    <default class="collision">
+      <geom group="3" type="mesh"/>
+    </default>
+  </default>
+  <asset>
+    <mesh file="cover.obj"/>
+  </asset>
+  <worldbody>
+    <body name="cover">
+      <geom mesh="cover" class="visual"/>
+      <geom mesh="cover" class="collision"/>
+    </body>
+  </worldbody>
+</mujoco>

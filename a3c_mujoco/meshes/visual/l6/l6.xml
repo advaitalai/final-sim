@@ -1,0 +1,76 @@
+<mujoco model="l6">
+  <default>
+    <default class="visual">
+      <geom group="2" type="mesh" contype="0" conaffinity="0"/>
+    </default>
+    <default class="collision">
+      <geom group="3" type="mesh"/>
+    </default>
+  </default>
+  <asset>
+    <material name="DEFAULT_MTL.002" specular="0.0" shininess="0.25" rgba="0.800000 0.800000 0.800000 1.000000"/>
+    <material name="MTL0.016" specular="0.0" shininess="0.25" rgba="1.000000 1.000000 1.000000 1.000000"/>
+    <material name="MTL1.007" specular="0.0" shininess="0.25" rgba="0.098000 0.098000 0.098000 1.000000"/>
+    <material name="MTL10" specular="0.0" shininess="0.25" rgba="0.843000 0.816000 0.753000 1.000000"/>
+    <material name="MTL11" specular="0.0" shininess="0.25" rgba="0.251000 0.251000 0.251000 1.000000"/>
+    <material name="MTL12" specular="0.0" shininess="0.25" rgba="0.827000 0.329000 0.071000 1.000000"/>
+    <material name="MTL13" specular="0.0" shininess="0.25" rgba="0.017000 0.018000 0.019000 1.000000"/>
+    <material name="MTL2.003" specular="0.0" shininess="0.25" rgba="0.784000 0.686000 0.510000 1.000000"/>
+    <material name="MTL3" specular="0.0" shininess="0.25" rgba="0.691000 0.664000 0.598000 1.000000"/>
+    <material name="MTL4" specular="0.0" shininess="0.25" rgba="0.060000 0.400000 0.060000 1.000000"/>
+    <material name="MTL5" specular="0.0" shininess="0.25" rgba="0.157000 0.157000 0.157000 1.000000"/>
+    <material name="MTL6" specular="0.0" shininess="0.25" rgba="0.725000 0.725000 0.725000 1.000000"/>
+    <material name="MTL7" specular="0.0" shininess="0.25" rgba="0.459000 0.345000 0.176000 1.000000"/>
+    <material name="MTL8" specular="0.0" shininess="0.25" rgba="0.502000 0.502000 0.502000 1.000000"/>
+    <material name="MTL9" specular="0.0" shininess="0.25" rgba="1.000000 1.000000 0.000000 1.000000"/>
+    <mesh file="l6_0.obj"/>
+    <mesh file="l6_1.obj"/>
+    <mesh file="l6_2.obj"/>
+    <mesh file="l6_3.obj"/>
+    <mesh file="l6_4.obj"/>
+    <mesh file="l6_5.obj"/>
+    <mesh file="l6_6.obj"/>
+    <mesh file="l6_7.obj"/>
+    <mesh file="l6_8.obj"/>
+    <mesh file="l6_9.obj"/>
+    <mesh file="l6_10.obj"/>
+    <mesh file="l6_11.obj"/>
+    <mesh file="l6_12.obj"/>
+    <mesh file="l6_13.obj"/>
+    <mesh file="l6_14.obj"/>
+  </asset>
+  <worldbody>
+    <body name="l6">
+      <geom mesh="l6_0" material="MTL13" class="visual"/>
+      <geom mesh="l6_1" material="MTL12" class="visual"/>
+      <geom mesh="l6_2" material="MTL11" class="visual"/>
+      <geom mesh="l6_3" material="MTL10" class="visual"/>
+      <geom mesh="l6_4" material="MTL9" class="visual"/>
+      <geom mesh="l6_5" material="MTL8" class="visual"/>
+      <geom mesh="l6_6" material="MTL7" class="visual"/>
+      <geom mesh="l6_7" material="MTL6" class="visual"/>
+      <geom mesh="l6_8" material="MTL5" class="visual"/>
+      <geom mesh="l6_9" material="MTL4" class="visual"/>
+      <geom mesh="l6_10" material="MTL3" class="visual"/>
+      <geom mesh="l6_11" material="MTL2.003" class="visual"/>
+      <geom mesh="l6_12" material="MTL1.007" class="visual"/>
+      <geom mesh="l6_13" material="DEFAULT_MTL.002" class="visual"/>
+      <geom mesh="l6_14" material="MTL0.016" class="visual"/>
+      <geom mesh="l6_0" class="collision"/>
+      <geom mesh="l6_1" class="collision"/>
+      <geom mesh="l6_2" class="collision"/>
+      <geom mesh="l6_3" class="collision"/>
+      <geom mesh="l6_4" class="collision"/>
+      <geom mesh="l6_5" class="collision"/>
+      <geom mesh="l6_6" class="collision"/>
+      <geom mesh="l6_7" class="collision"/>
+      <geom mesh="l6_8" class="collision"/>
+      <geom mesh="l6_9" class="collision"/>
+      <geom mesh="l6_10" class="collision"/>
+      <geom mesh="l6_11" class="collision"/>
+      <geom mesh="l6_12" class="collision"/>
+      <geom mesh="l6_13" class="collision"/>
+      <geom mesh="l6_14" class="collision"/>
+    </body>
+  </worldbody>
+</mujoco>

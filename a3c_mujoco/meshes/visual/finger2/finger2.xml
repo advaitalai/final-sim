@@ -1,0 +1,19 @@
+<mujoco model="finger2">
+  <default>
+    <default class="visual">
+      <geom group="2" type="mesh" contype="0" conaffinity="0"/>
+    </default>
+    <default class="collision">
+      <geom group="3" type="mesh"/>
+    </default>
+  </default>
+  <asset>
+    <mesh file="finger2.obj"/>
+  </asset>
+  <worldbody>
+    <body name="finger2">
+      <geom mesh="finger2" class="visual"/>
+      <geom mesh="finger2" class="collision"/>
+    </body>
+  </worldbody>
+</mujoco>
