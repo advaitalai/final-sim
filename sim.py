@@ -28,14 +28,11 @@ dt: float = 0.002
 task_time: int = 5 # Move to the next task every 5 seconds
 
 # Maximum allowable joint velocity in rad/s. Set to 0 to disable.
-max_angvel = 0.0
+max_angvel = 0
 
 # Damping term for the pseudoinverse. This is used to prevent joint velocities from
 # becoming too large when the Jacobian is close to singular.
 damping: float = 1e-5
-
-# Maximum allowable joint velocity in rad/s. Set to 0 to disable.
-max_angvel = 0
 
 def get_task_pose(model, data, task: str) -> np.ndarray:
     task_pose = np.zeros(7) # first 3 are positions, last 4 are quaternions
@@ -81,7 +78,7 @@ def execute_tasks(model, data, flag=1) -> None:
     if flag == 0:
         task_space = ['mocap']
     else:
-        task_space = ['pre-grasp']
+        task_space = ['pre-grasp', 'move-down']
     
     # End-effector site we wish to control.
     site_name = "attachment_site"

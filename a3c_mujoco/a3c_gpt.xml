@@ -1,5 +1,6 @@
 <mujoco model="robot_arm">
     <compiler autolimits="true"/>
+    <option integrator="implicitfast"/>
 	<default>
 		<!-- Default definitions for visual and collision geoms -->
 		<default class="visual">
@@ -9,8 +10,8 @@
 			<geom group="3" type="mesh" condim="6" friction="1 5e-3 5e-4" solref=".01 1"/>
 		</default>
 		<!-- Default definition for all hinge joints -->
-		<default class="joint_hinge">
-			<joint type="hinge" axis="0 1 0" range="-180 180" damping="1" stiffness="1"/>
+		<default class="joint_hinge" >
+			<joint type="hinge" axis="0 1 0" range="-180 180" armature="0.005"/>
 		</default>
 		<!-- Default definition for slide joints with positive range -->
 		<default class="joint_slide_pos">
@@ -20,6 +21,15 @@
 		<default class="joint_slide_neg">
 			<joint type="slide" axis="0 1 0" range="-0.02 0" damping="1" stiffness="1"/>
 		</default>
+
+        <!-- Default settings for arm position servos -->
+        <default class="arm_position">
+            <position ctrlrange="-180 180" kp="1.5" kv="1.5"/>
+        </default>
+        <!-- Default settings for finger position servos -->
+        <default class="finger_position">
+            <position ctrlrange="-180 180"/>
+        </default>
 	</default>
 
 	<asset>
@@ -283,7 +293,7 @@
         <exclude body1="l4" body2="l6"/>
     </contact-->
     
-	<actuator>
+<!--actuator>
 	<motor joint="base_l1_joint" ctrlrange="-360 360"/>
 	<motor joint="l1_l2_joint" ctrlrange="-360 360"/>
 	<motor joint="l2_l3_joint" ctrlrange="-360 360"/>
@@ -293,9 +303,21 @@
 	<motor joint="l6_cover" ctrlrange="-360 360"/>
 	<motor joint="cover_finger1" ctrlrange="0 0.35"/>
 	<motor joint="cover_finger2" ctrlrange="-0.35 0"/>
+</actuator-->
+
+<actuator>
+	<position joint="base_l1_joint" class="arm_position"/>
+	<position joint="l1_l2_joint" class="arm_position"/>
+	<position joint="l2_l3_joint" class="arm_position"/>
+	<position joint="l3_l4_joint" class="arm_position"/>
+	<position joint="l4_l5_joint" class="arm_position"/>
+	<position joint="l5_l6_joint" class="arm_position"/>
+	<position joint="l6_cover" class="arm_position"/>
+	<position joint="cover_finger1" class="finger_position"/>
+	<position joint="cover_finger2" class="finger_position"/>
 </actuator>
 
 	<keyframe>
-		<key name="home" qpos="0 0 0 0 0 0 0 0 0"/>
+		<key name="home" qpos="-1.57 0 -1.57 0 -1.57 0 0 0 0"/>
 	</keyframe>
 </mujoco>
