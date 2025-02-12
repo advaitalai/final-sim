@@ -2,17 +2,11 @@ import mujoco
 import mujoco.viewer
 import numpy as np
 import time
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+
 from pathlib import Path
-
-# Cartesian impedance control gains.
-impedance_pos = np.asarray([100.0, 100.0, 100.0])  # [N/m]
-impedance_ori = np.asarray([50.0, 50.0, 50.0])  # [Nm/rad]
-
-# Joint impedance control gains.
-Kp_null = np.asarray([75.0, 75.0, 50.0, 50.0, 40.0, 25.0, 25.0, 30.0, 30.0])
-
-# Damping ratio for both Cartesian and joint impedance control.
-damping_ratio = 1.0
 
 # Gains for the twist computation. These should be between 0 and 1. 0 means no
 # movement, 1 means move the end-effector to the target in one integration step.
@@ -24,7 +18,7 @@ Kpos: float = 0.95
 Kori: float = 0.95
 
 # Integration timestep in seconds.
-integration_dt: float = 1.0
+integration_dt: float = 1
 
 # Whether to enable gravity compensation.
 gravity_compensation: bool = True
@@ -40,14 +34,9 @@ max_angvel = 0.0
 # becoming too large when the Jacobian is close to singular.
 damping: float = 1e-5
 
-def grip_control (data, task) -> int:
-    # Zero by default is closed, one is open
-    if task == 'grasp':
-        val = 150
-    else:
-        val = 0
-    return val
-    
+# Maximum allowable joint velocity in rad/s. Set to 0 to disable.
+max_angvel = 0
+
 def get_task_pose(model, data, task: str) -> np.ndarray:
     task_pose = np.zeros(7) # first 3 are positions, last 4 are quaternions
     if task == 'pre-grasp':
@@ -69,22 +58,31 @@ def get_task_pose(model, data, task: str) -> np.ndarray:
         task_pose[3:] = data.body("target").xquat # set to the orientation of the target
     return task_pose
 
+def plot_errors(error_matrix, time_steps) -> None:
+    # Convert the error list to a NumPy array of shape (num_steps, 6)
+    error_matrix = np.array(error_matrix)
+
+    # Plot each of the 6 error components over time.
+    plt.figure(figsize=(10, 6))
+    for j in range(6):
+        plt.plot(time_steps, error_matrix[:, j], label=f"Error component {j}")
+
+    plt.xlabel("Time (s)")
+    plt.ylabel("Error Value")
+    plt.title("6D Error Components vs. Time")
+    plt.grid(True)
+    plt.legend()
+    plt.savefig("error_plot.png")
+    print("Error plot saved as 'error_plot.png'.")
+
 def execute_tasks(model, data, flag=1) -> None:
     """" (flag = 1) Core loop to cycle through task space and perform IK. (flag = 0) is for mocap mouse seek """
 
     if flag == 0:
         task_space = ['mocap']
     else:
-        task_space = ['pre-grasp', 'move-down']
+        task_space = ['pre-grasp']
     
-    # Compute damping and stiffness matrices.
-    damping_pos = damping_ratio * 2 * np.sqrt(impedance_pos)
-    damping_ori = damping_ratio * 2 * np.sqrt(impedance_ori)
-    Kp = np.concatenate([impedance_pos, impedance_ori], axis=0)
-    Kd = np.concatenate([damping_pos, damping_ori], axis=0)
-    Ki = Kp * 0.2 # Unused. 
-    Kd_null = damping_ratio * 2 * np.sqrt(Kp_null)
-
     # End-effector site we wish to control.
     site_name = "attachment_site"
     site_id = model.site(site_name).id
@@ -101,18 +99,19 @@ def execute_tasks(model, data, flag=1) -> None:
     # Pre-allocate numpy arrays.
     jac = np.zeros((6, model.nv))
     diag = damping * np.eye(6)
-    twist = np.zeros(6)
     error = np.zeros(6)
     error_pos = error[:3]
     error_ori = error[3:]
     site_quat = np.zeros(4)
     site_quat_conj = np.zeros(4)
     error_quat = np.zeros(4)
-    M_inv = np.zeros((model.nv, model.nv))
-    Mx = np.zeros((6, 6))
 
     # Simulation counter. Move to the next task every (task_time / dt) ticks
     i = 0
+
+    # Initialize lists to record time and the 6D error vector at each timestep.
+    time_steps = []
+    error_matrix = []  # Each element will be a 6-element vector (list or array)
 
     with mujoco.viewer.launch_passive(
         model=model,
@@ -142,13 +141,22 @@ def execute_tasks(model, data, flag=1) -> None:
             mujoco.mju_mulQuat(error_quat, task_pose[3:], site_quat_conj)
             mujoco.mju_quat2Vel(error_ori, error_quat, integration_dt)
 
-            print(f"Task: {task}, Error: {error}")
+            #print(f"Task: {task}, Error: {error}")
+            # Record the current time (simulation step count * dt) and the full error vector.
+            time_steps.append(i * dt)
+            error_matrix.append(error.copy())  # Save a copy of the current 6-element error vector.
 
             # Jacobian.
             mujoco.mj_jacSite(model, data, jac[:3], jac[3:], site_id)
 
             # Solve system of equations: J @ dq = error.
             dq = jac.T @ np.linalg.solve(jac @ jac.T + diag, error)
+
+            # Scale down joint velocities if they exceed maximum.
+            if max_angvel > 0:
+                dq_abs_max = np.abs(dq).max()
+                if dq_abs_max > max_angvel:
+                    dq *= max_angvel / dq_abs_max
 
             # Integrate joint velocities to obtain joint positions.
             q = data.qpos.copy()
@@ -157,40 +165,6 @@ def execute_tasks(model, data, flag=1) -> None:
             # Set the control signal.
             np.clip(q, *model.jnt_range.T, out=q)
             data.ctrl[actuator_ids] = q[dof_ids]
-
-            """ All of these computations are done for nullspace going through the force route
-            # Calculate velocities
-            twist[:3] = Kpos * error_pos / integration_dt
-            twist[3:] = Kori * error_ori / integration_dt
-
-            # Compute the task-space inertia matrix.
-            mujoco.mj_solveM(model, data, M_inv, np.eye(model.nv))
-            Mx_inv = jac @ M_inv @ jac.T
-            if abs(np.linalg.det(Mx_inv)) >= 1e-2:
-                Mx = np.linalg.inv(Mx_inv)
-            else:
-                Mx = np.linalg.pinv(Mx_inv, rcond=1e-2)
-
-            # Compute generalized forces. Add integral term if necessary
-            tau = jac.T @ Mx @ (Kp * twist - Kd * (jac @ data.qvel[dof_ids]))
-
-            # Add joint task in nullspace. - commented out for a 6 DOF a3c arm, there is NO null space. 
-            # Jbar = M_inv @ jac.T @ Mx
-            # ddq = Kp_null * (q0 - data.qpos[dof_ids]) - Kd_null * data.qvel[dof_ids]
-            # tau += (np.eye(model.nv) - jac.T @ Jbar.T) @ ddq
-
-            # Add gravity compensation.
-            if gravity_compensation:
-                tau += data.qfrc_bias[dof_ids]
-
-            # Set the control signals
-            arm_tau = tau[:7] # Only arm torques
-            tau_combined = np.zeros(model.nu)
-            tau_combined[:7] = arm_tau  # arm motors
-            tau_combined[7]  = grip_control(data, task)
-            np.clip(tau_combined, *model.actuator_ctrlrange.T, out=tau_combined)
-            data.ctrl[:] = tau_combined
-            """
 
             # Step the simulation
             mujoco.mj_step(model, data)
@@ -202,13 +176,16 @@ def execute_tasks(model, data, flag=1) -> None:
                 task_space.append(task)
                 error_integral = np.zeros(6)
                 print(f"Switching to task at target pose: {task, task_pose}")
-                print(f"Current end-effector pose: {data.site(site_id).xpos, site_quat}")
 
             viewer.sync()
             time_until_next_step = dt - (time.time() - step_start)
             if time_until_next_step > 0:
                 time.sleep(time_until_next_step)
 
+    
+    viewer.close()
+    # Save error plot
+    plot_errors(error_matrix, time_steps)
 
 if __name__ == "__main__":
     assert mujoco.__version__ >= "3.1.0", "Please upgrade to mujoco 3.1.0 or later."

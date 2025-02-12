@@ -10,7 +10,7 @@
 		</default>
 		<!-- Default definition for all hinge joints -->
 		<default class="joint_hinge">
-			<joint type="hinge" axis="0 1 0" range="-360 360" damping="1" stiffness="1"/>
+			<joint type="hinge" axis="0 1 0" range="-180 180" damping="1" stiffness="1"/>
 		</default>
 		<!-- Default definition for slide joints with positive range -->
 		<default class="joint_slide_pos">
@@ -271,26 +271,29 @@
 		</body>
 	</worldbody>
 
-    <contact>
+    <!--contact>
         <exclude body1="base_link" body2="l1"/>
         <exclude body1="base_link" body2="l2"/>
         <exclude body1="base_link" body2="l3"/>
         <exclude body1="l1" body2="l3"/>
+        <exclude body1="l1" body2="l2"/>
+        <exclude body1="l2" body2="l3"/>
+        <exclude body1="l3" body2="l4"/>
         <exclude body1="l3" body2="l5"/>
         <exclude body1="l4" body2="l6"/>
-    </contact>
+    </contact-->
     
 	<actuator>
-		<motor joint="base_l1_joint" ctrlrange="-31.4 31.4"/>
-		<motor joint="l1_l2_joint" ctrlrange="-31.4 31.4"/>
-		<motor joint="l2_l3_joint" ctrlrange="-31.4 31.4"/>
-		<motor joint="l3_l4_joint" ctrlrange="-31.4 31.4"/>
-		<motor joint="l4_l5_joint" ctrlrange="-31.4 31.4"/>
-		<motor joint="l5_l6_joint" ctrlrange="-31.4 31.4"/>
-		<motor joint="l6_cover" ctrlrange="-31.4 31.4"/>
-		<motor joint="cover_finger1" ctrlrange="0 0.35"/>
-		<motor joint="cover_finger2" ctrlrange="-0.35 0"/>
-	</actuator>
+	<motor joint="base_l1_joint" ctrlrange="-360 360"/>
+	<motor joint="l1_l2_joint" ctrlrange="-360 360"/>
+	<motor joint="l2_l3_joint" ctrlrange="-360 360"/>
+	<motor joint="l3_l4_joint" ctrlrange="-360 360"/>
+	<motor joint="l4_l5_joint" ctrlrange="-360 360"/>
+	<motor joint="l5_l6_joint" ctrlrange="-360 360"/>
+	<motor joint="l6_cover" ctrlrange="-360 360"/>
+	<motor joint="cover_finger1" ctrlrange="0 0.35"/>
+	<motor joint="cover_finger2" ctrlrange="-0.35 0"/>
+</actuator>
 
 	<keyframe>
 		<key name="home" qpos="0 0 0 0 0 0 0 0 0"/>
