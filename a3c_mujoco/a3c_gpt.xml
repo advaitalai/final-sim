@@ -15,11 +15,11 @@
 		</default>
 		<!-- Default definition for slide joints with positive range -->
 		<default class="joint_slide_pos">
-			<joint type="slide" axis="0 1 0" range="0 0.02" armature="0.005"/>
+			<joint type="slide" axis="0 1 0" range="0 0.02" damping="100" armature="0.005"/>
 		</default>
 		<!-- Default definition for slide joints with negative range -->
 		<default class="joint_slide_neg">
-			<joint type="slide" axis="0 1 0" range="-0.02 0" armature="0.005"/>
+			<joint type="slide" axis="0 1 0" range="-0.02 0" damping="100" armature="0.005"/>
 		</default>
 
         <!-- Default settings for arm position servos -->
@@ -257,7 +257,7 @@
 									<body name="cover" pos="0 0 0" euler="0 0 0"  gravcomp="1">
 										<site name="attachment_site" rgba="1 0 0 1" size="0.01" group="1"/>
                                         <site name="grip_site" pos="0 0.05 0.0625" rgba="1 0 0 1" size="0.01" group="1"/>
-                                        <site name="grip_site_cylinder" pos="0 0.05 0.0625" euler="-90 0 0" size="0.005 10" rgba="0 1 0 0.3" type="cylinder" group="1"/>
+                                        <site name="grip_site_cylinder" pos="0 0.05 0.0625" euler="-90 0 0" size="0.005 10" rgba="0.5 0.5 0.5 0.3" type="cylinder" group="1"/>
 										<joint name="l6_cover" class="joint_hinge"/>
 										<geom mesh="cover" class="visual"/>
 										<geom mesh="cover" class="collision"/>
@@ -265,13 +265,13 @@
 										<body name="finger1" pos="0 0.03 0.0425" euler="-90 0 90" gravcomp="1">
 											<joint name="cover_finger1" class="joint_slide_pos"/>
 											<geom mesh="finger1" class="visual"/>
-											<geom mesh="finger1" class="collision"/>
+											<geom mesh="finger1" class="collision" solref="0.02 10" friction = "2 0.05 0.0001"/>
 										</body>
 
 										<body name="finger2" pos="0 0.03 0.0425" euler="-90 0 90" gravcomp="1">
 											<joint name="cover_finger2" class="joint_slide_neg"/>
 											<geom mesh="finger2" class="visual"/>
-											<geom mesh="finger2" class="collision"/>
+											<geom mesh="finger2" class="collision" solref="0.02 10" friction = "2 0.05 0.0001"/>
 										</body>
 									</body>
 								</body>
@@ -320,6 +320,6 @@
 </actuator>
 
 	<keyframe>
-		<key name="home" qpos="-1.9 -0.719 -1.21 0.147 -1.08 0.758 0.921 0.03 -0.03"/>
+		<key name="home" qpos="-1.9 -0.719 -1.21 0.147 -1.08 0.758 0.921 0.03 -0.03 0.3 0.3 0.025 0.7071 -0.7071 0 0"/>
 	</keyframe>
 </mujoco>

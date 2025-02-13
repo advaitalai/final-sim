@@ -41,15 +41,15 @@ def get_task_pose(model, data, task: str) -> np.ndarray:
     task_pose = np.zeros(7) # first 3 are positions, last 4 are quaternions
     if task == 'pre-grasp':
         task_pose[:3] = data.body("object").xpos
-        task_pose[2] += 0.3 # the gripper should be 30cm above the target while pre-grasp in the z direction
+        task_pose[2] += 0.1 # the gripper should be 30cm above the target while pre-grasp in the z direction
         task_pose[3:] = data.body("object").xquat # set to the orientation of the target
     elif task == 'move-down':
         task_pose[:3] = data.body("object").xpos
-        task_pose[2] += 0.15 # the gripper should be just above the object to grasp it. 
+        task_pose[2] += 0.03 # the gripper should be just above the object to grasp it. 
         task_pose[3:] = data.body("object").xquat # set to the orientation of the target
     elif task == 'grasp':
         task_pose[:3] = data.body("object").xpos
-        task_pose[2] += 0.15 # the gripper should be just above the box to grasp it. 
+        task_pose[2] += 0.03 # the gripper should be just above the box to grasp it. 
         task_pose[3:] = data.body("object").xquat # set to the orientation of the target
     elif task == 'move-up':
         pass
@@ -69,8 +69,8 @@ def key_callback(key):
             data.qpos[model.joint("cover_finger2").qposadr] = -0.02
         else:
             # Close the fingers
-            data.qpos[model.joint("cover_finger1").qposadr] = 0.0
-            data.qpos[model.joint("cover_finger2").qposadr] = 0.0
+            data.qpos[model.joint("cover_finger1").qposadr] = 0.005
+            data.qpos[model.joint("cover_finger2").qposadr] = -0.005
 
 def plot_errors(error_matrix, time_steps) -> None:
     # Convert the error list to a NumPy array of shape (num_steps, 6)
@@ -95,14 +95,14 @@ def execute_tasks(model, data, flag=1) -> None:
     if flag == 0:
         task_space = ['mocap']
     else:
-        task_space = ['pre-grasp']
+        task_space = ['pre-grasp', 'move-down']
     
     # End-effector site we wish to control.
     site_name = "grip_site"
     site_id = model.site(site_name).id
 
-    # Get the DOF and actuator ids
-    dof_ids = np.array([i for i in range(model.nv)])
+    # Get the DOF and actuator ids. Subtract 6 to exclude the 6-DOF free body.
+    dof_ids = np.array([i for i in range(model.nv-6)])
     actuator_ids = dof_ids
 
     # Initial joint configuration saved as a keyframe in the XML file.
@@ -127,6 +127,11 @@ def execute_tasks(model, data, flag=1) -> None:
     time_steps = []
     error_matrix = []  # Each element will be a 6-element vector (list or array)
 
+    # Start with a certain task in the task space. 
+    task = task_space[0]
+    task_pose = get_task_pose(model, data, task)
+    print(f"Initial task at target pose: {task, task_pose}")
+
     with mujoco.viewer.launch_passive(
         model=model,
         data=data,
@@ -142,14 +147,14 @@ def execute_tasks(model, data, flag=1) -> None:
 
         # Enable site frame visualization.
         viewer.opt.frame = mujoco.mjtFrame.mjFRAME_SITE
+
+        # Enable contact points visualization.
+        viewer.opt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = True
+        
         while viewer.is_running():
             step_start = time.time()
-
-            # Start with a certain task in the task space. 
-            task = task_space[0]
+            
             task_pose = get_task_pose(model, data, task)
-
-            #dx = named_body.xpos - data.site(site_id).xpos
             error_pos[:] = task_pose[:3] - data.site(site_id).xpos
             mujoco.mju_mat2Quat(site_quat, data.site(site_id).xmat)
             mujoco.mju_negQuat(site_quat_conj, site_quat)
@@ -172,7 +177,10 @@ def execute_tasks(model, data, flag=1) -> None:
             mujoco.mj_integratePos(model, q, dq, integration_dt)
 
             # Set the control signal.
-            np.clip(q, *model.jnt_range.T, out=q)
+            #np.clip(q, *model.jnt_range.T, out=q)
+            # Assuming q is the array of joint positions and dof_ids is the array of indices for the joints to be clipped
+            for dof_id in dof_ids:
+                q[dof_id] = np.clip(q[dof_id], model.jnt_range[dof_id, 0], model.jnt_range[dof_id, 1])
             data.ctrl[actuator_ids] = q[dof_ids]
 
             # Step the simulation
@@ -181,9 +189,9 @@ def execute_tasks(model, data, flag=1) -> None:
 
             # Update the task every X ticks
             if i % int(task_time / dt) == 0:
-                task = task_space.pop(0) # the first run, this is 'pre-grasp'
+                task_space.pop(0) # the first run, this is 'pre-grasp'
                 task_space.append(task)
-                error_integral = np.zeros(6)
+                task = task_space[0]
                 print(f"Switching to task at target pose: {task, task_pose}")
 
             viewer.sync()
