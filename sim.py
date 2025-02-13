@@ -34,6 +34,9 @@ max_angvel = 0
 # becoming too large when the Jacobian is close to singular.
 damping: float = 1e-5
 
+model = None
+data = None
+
 def get_task_pose(model, data, task: str) -> np.ndarray:
     task_pose = np.zeros(7) # first 3 are positions, last 4 are quaternions
     if task == 'pre-grasp':
@@ -54,6 +57,20 @@ def get_task_pose(model, data, task: str) -> np.ndarray:
         task_pose[:3] = data.body("target").xpos
         task_pose[3:] = data.body("target").xquat # set to the orientation of the target
     return task_pose
+
+def key_callback(key):
+    if chr(key) == ' ':
+        finger1_pos = data.qpos[model.joint("cover_finger1").qposadr]
+        finger2_pos = data.qpos[model.joint("cover_finger2").qposadr]
+    
+        if finger1_pos < 0.01 and finger2_pos < 0.01:
+            # Open the fingers
+            data.qpos[model.joint("cover_finger1").qposadr] = 0.02
+            data.qpos[model.joint("cover_finger2").qposadr] = -0.02
+        else:
+            # Close the fingers
+            data.qpos[model.joint("cover_finger1").qposadr] = 0.0
+            data.qpos[model.joint("cover_finger2").qposadr] = 0.0
 
 def plot_errors(error_matrix, time_steps) -> None:
     # Convert the error list to a NumPy array of shape (num_steps, 6)
@@ -78,10 +95,10 @@ def execute_tasks(model, data, flag=1) -> None:
     if flag == 0:
         task_space = ['mocap']
     else:
-        task_space = ['pre-grasp', 'move-down']
+        task_space = ['pre-grasp']
     
     # End-effector site we wish to control.
-    site_name = "attachment_site"
+    site_name = "grip_site"
     site_id = model.site(site_name).id
 
     # Get the DOF and actuator ids
@@ -115,6 +132,7 @@ def execute_tasks(model, data, flag=1) -> None:
         data=data,
         show_left_ui=False,
         show_right_ui=False,
+        key_callback=key_callback
     ) as viewer:
         # Reset the simulation.
         mujoco.mj_resetDataKeyframe(model, data, key_id)
@@ -148,12 +166,6 @@ def execute_tasks(model, data, flag=1) -> None:
 
             # Solve system of equations: J @ dq = error.
             dq = jac.T @ np.linalg.solve(jac @ jac.T + diag, error)
-
-            # Scale down joint velocities if they exceed maximum.
-            if max_angvel > 0:
-                dq_abs_max = np.abs(dq).max()
-                if dq_abs_max > max_angvel:
-                    dq *= max_angvel / dq_abs_max
 
             # Integrate joint velocities to obtain joint positions.
             q = data.qpos.copy()
@@ -189,7 +201,6 @@ if __name__ == "__main__":
 
     cwd = Path(__file__).resolve().parent  # Parent directory path
 
-    # Load the model and data.
     model_path = str(cwd) + "/a3c_mujoco/scene.xml"
     model = mujoco.MjModel.from_xml_path(model_path)
     data = mujoco.MjData(model)

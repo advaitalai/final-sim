@@ -15,11 +15,11 @@
 		</default>
 		<!-- Default definition for slide joints with positive range -->
 		<default class="joint_slide_pos">
-			<joint type="slide" axis="0 1 0" range="0 0.02" damping="1" stiffness="1"/>
+			<joint type="slide" axis="0 1 0" range="0 0.02" armature="0.005"/>
 		</default>
 		<!-- Default definition for slide joints with negative range -->
 		<default class="joint_slide_neg">
-			<joint type="slide" axis="0 1 0" range="-0.02 0" damping="1" stiffness="1"/>
+			<joint type="slide" axis="0 1 0" range="-0.02 0" armature="0.005"/>
 		</default>
 
         <!-- Default settings for arm position servos -->
@@ -256,6 +256,8 @@
 
 									<body name="cover" pos="0 0 0" euler="0 0 0"  gravcomp="1">
 										<site name="attachment_site" rgba="1 0 0 1" size="0.01" group="1"/>
+                                        <site name="grip_site" pos="0 0.05 0.0625" rgba="1 0 0 1" size="0.01" group="1"/>
+                                        <site name="grip_site_cylinder" pos="0 0.05 0.0625" euler="-90 0 0" size="0.005 10" rgba="0 1 0 0.3" type="cylinder" group="1"/>
 										<joint name="l6_cover" class="joint_hinge"/>
 										<geom mesh="cover" class="visual"/>
 										<geom mesh="cover" class="collision"/>
@@ -313,11 +315,11 @@
 	<position joint="l4_l5_joint" class="arm_position"/>
 	<position joint="l5_l6_joint" class="arm_position"/>
 	<position joint="l6_cover" class="arm_position"/>
-	<position joint="cover_finger1" class="finger_position"/>
-	<position joint="cover_finger2" class="finger_position"/>
+	<position joint="cover_finger1" ctrlrange="0 0.02" forcerange="-20 20"/>
+	<position joint="cover_finger2" ctrlrange="-0.02 0" forcerange="-20 20"/>
 </actuator>
 
 	<keyframe>
-		<key name="home" qpos="-1.57 0 -1.57 0 -1.57 0 0 0 0"/>
+		<key name="home" qpos="-1.9 -0.719 -1.21 0.147 -1.08 0.758 0.921 0.03 -0.03"/>
 	</keyframe>
 </mujoco>
